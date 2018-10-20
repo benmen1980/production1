@@ -9,7 +9,7 @@ include_once ('admin/includes/enqueBootStrap.php');
 
 /* public */
 include_once ('public/views/form1.php');
-include_once ('public/views/view_serials.php');
+//include_once( 'public/views/view_serials.php' );
 
 
 function wporg_options_page()

@@ -6,8 +6,43 @@
  * Time: 00:50
  */
 
+/* comment */
+function my_post_type_xhr(){
+	global $post;
+	if('royy_serial' === $post->post_type){
+		$post_url = admin_url('post.php'); #In case we're on post-new.php
+		echo "
+        <script>
+            jQuery(document).ready(function($){
+                //Click handler - you might have to bind this click event another way
+                $('#tab-main-button').click(function(){
+                    //Post to post.php
+                    var postURL = '$post_url';
+
+                    //Collate all post form data
+                    var data = $('#tabform').serializeArray();
+
+                    //Set a trigger for our save_post action
+                    data.push({foo_doing_ajax: true});
+
+                    //The XHR Goodness
+                    $.post(postURL, data, function(response){
+                        var obj = $.parseJSON(response);
+                        if(obj.success)
+                            alert('Successfully saved post!');
+                        else
+                            alert('Something went wrong. ' + response);
+                    });
+                    return false;
+                });
+            });
+        </script>";
+	}
+}
+
 function gen_tabs(){
 	enqueBootStrap();
+	wp_enqueue_script('save-post-meta',plugin_dir_path(__FILE__).'public/js/save-post-meta.js');
 	?>
 
     <h1>
@@ -15,6 +50,7 @@ function gen_tabs(){
     </h1>
 
 	<!-- Tabs -->
+    <form id="tabform">
 	<section id="tabs">
 		<div class="container">
 			<div class="row">
@@ -22,7 +58,8 @@ function gen_tabs(){
                 <h6 class="section-title h1">QC Forms</h6>
                 </div>
                 <div class="col-6 ">
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button id="tab-main-button" type="submit" class="btn btn-primary">Submit</button>
+
                 </div>
             </div>
             <div class="row">
@@ -54,6 +91,7 @@ function gen_tabs(){
 			</div>
 		</div>
 	</section>
+    </form>
 	<!-- ./Tabs -->
 
 
@@ -129,5 +167,69 @@ function add_form_1() {
 <?php
 }
 add_shortcode('form1',gen_tabs);
+add_shortcode('form2',add_new_form);
 
+function add_new_form(){
+    ?>
+    <!-- New Post Form -->
 
+	<?php $postTitle = $_POST['post_title'];
+	$post = $_POST['post'];
+	$submit = $_POST['submit'];
+	$foo = $_POST['foo'];
+
+	if(isset($submit)){
+
+		global $user_ID;
+
+		$new_post = array(
+			'post_title' => $postTitle,
+			'post_content' => $post,
+			'post_status' => 'publish',
+			'post_date' => date('Y-m-d H:i:s'),
+			'post_author' => $user_ID,
+			'post_type' => 'post',
+			'post_category' => array(0)
+		);
+
+		$post_id = wp_insert_post($new_post);
+		add_post_meta($post_id,'foo',$foo);
+//		wp_redirect(home_url('/page_id=35/'));
+
+	}
+
+	?>
+    <!DOCTYPE HTML SYSTEM>
+    <html>
+    <head>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+        <title>Untitled Document</title>
+    </head>
+
+    <body>
+    <div id="wrap">
+        <form action="" method="post">
+            <table border="1" width="200">
+                <tr>
+                    <td><label for="post_title">Post Title</label></td>
+                    <td><input name="post_title" type="text" /></td>
+                </tr>
+                <tr>
+                    <td><label for="post">Post</label></td>
+                    <td><input name="post" type="text" /></td>
+                </tr>
+                <tr>
+                    <td><label for="post">Foo</label></td>
+                    <td><input name="foo" type="text" /></td>
+                </tr>
+            </table>
+
+            <input name="submit" type="submit" value="submit" />
+        </form>
+    </div>
+
+    </body>
+    </html>
+    <!--// New Post Form -->
+<?php
+}
